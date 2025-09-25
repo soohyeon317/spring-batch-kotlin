@@ -44,9 +44,11 @@ class AccountJobConfig(
 //    ): Step {
 //        return StepBuilder("accountStep", jobRepository)
 //            .chunk<AccountEntity, Account>(chunkSize, transactionManager)
+//            .listener(StepDurationTrackerListener())
 //            .reader(accountReader)
 //            .processor(accountProcessor)
 //            .writer(accountWriter)
+//            .listener(ChunkDurationTrackerListener())
 //            .build()
 //    }
 
@@ -59,9 +61,11 @@ class AccountJobConfig(
 //    ): Step {
 //        return StepBuilder("accountStep", jobRepository)
 //            .chunk<AccountEntity, Account>(chunkSize, transactionManager)
+//            .listener(StepDurationTrackerListener())
 //            .reader(noOffsetAccountReader)
 //            .processor(accountProcessor)
 //            .writer(accountWriter)
+//            .listener(ChunkDurationTrackerListener())
 //            .build()
 //    }
 
@@ -70,13 +74,15 @@ class AccountJobConfig(
         transactionManager: PlatformTransactionManager,
         jpaCursorAccountReader: JpaCursorItemReader<AccountEntity>,
         accountProcessor: ItemProcessor<AccountEntity, Account>,
-        accountWriter: ItemWriter<Account>,
+        accountWriter: ItemWriter<Account>
     ): Step {
         return StepBuilder("accountStep", jobRepository)
             .chunk<AccountEntity, Account>(chunkSize, transactionManager)
+            .listener(StepDurationTrackerListener())
             .reader(jpaCursorAccountReader)
             .processor(accountProcessor)
             .writer(accountWriter)
+            .listener(ChunkDurationTrackerListener())
             .build()
     }
 
