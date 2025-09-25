@@ -2,7 +2,7 @@ package com.example.springbatchkotlin.configuration
 
 import com.example.springbatchkotlin.domain.account.Account
 import com.example.springbatchkotlin.infrastructure.persistence.jpa.account.AccountEntity
-import com.example.springbatchkotlin.infrastructure.persistence.jpa.account.SpringDataAccountRepository
+import jakarta.persistence.EntityManagerFactory
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.job.builder.JobBuilder
@@ -10,19 +10,18 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
 import org.springframework.batch.item.ItemProcessor
-import org.springframework.batch.item.ItemReader
 import org.springframework.batch.item.ItemWriter
-import org.springframework.batch.item.data.RepositoryItemReader
-import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.data.domain.Sort
 import org.springframework.transaction.PlatformTransactionManager
 
 @Configuration
 class AccountJobConfig(
-    private val jobRepository: JobRepository
+    private val entityManagerFactory: EntityManagerFactory,
+    private val jobRepository: JobRepository,
 ) {
+
+    private val chunkSize = 3
 
     @Bean
     fun accountJob(accountStep: Step): Job {
@@ -32,38 +31,71 @@ class AccountJobConfig(
             .build()
     }
 
+//    @Bean
+//    fun accountStep(
+//        transactionManager: PlatformTransactionManager,
+//        accountReader: ItemReader<AccountEntity>,
+//        accountProcessor: ItemProcessor<AccountEntity, Account>,
+//        accountWriter: ItemWriter<Account>,
+//    ): Step {
+//        return StepBuilder("accountStep", jobRepository)
+//            .chunk<AccountEntity, Account>(chunkSize, transactionManager)
+//            .reader(accountReader)
+//            .processor(accountProcessor)
+//            .writer(accountWriter)
+//            .build()
+//    }
+
     @Bean
     fun accountStep(
         transactionManager: PlatformTransactionManager,
-        accountReader: ItemReader<AccountEntity>,
+        noOffsetAccountReader: NoOffsetAccountReader<AccountEntity>,
         accountProcessor: ItemProcessor<AccountEntity, Account>,
-        accountWriter: ItemWriter<Account>
+        accountWriter: ItemWriter<Account>,
     ): Step {
         return StepBuilder("accountStep", jobRepository)
-            .chunk<AccountEntity, Account>(100, transactionManager)
-            .reader(accountReader)
+            .chunk<AccountEntity, Account>(chunkSize, transactionManager)
+            .reader(noOffsetAccountReader)
             .processor(accountProcessor)
             .writer(accountWriter)
             .build()
     }
 
+//    @Bean
+//    fun accountReader(
+//        accountRepository: SpringDataAccountRepository,
+//    ): RepositoryItemReader<AccountEntity> {
+//        return RepositoryItemReaderBuilder<AccountEntity>()
+//            .name("accountReader")
+//            .repository(accountRepository)
+//            .methodName("findAllByDeletedAtIsNull")
+//            .pageSize(chunkSize)
+//            .sorts(mapOf("id" to Sort.Direction.ASC))
+//            .build()
+//    }
+
     @Bean
-    fun accountReader(
-        accountRepository: SpringDataAccountRepository
-    ): RepositoryItemReader<AccountEntity> {
-        return RepositoryItemReaderBuilder<AccountEntity>()
-            .name("accountReader")
-            .repository(accountRepository)
-            .methodName("findAllByDeletedAtIsNull")
-            .pageSize(100)
-            .sorts(mapOf("id" to Sort.Direction.ASC))
+    fun noOffsetAccountReader(): NoOffsetAccountReader<AccountEntity> {
+        val queryString =
+            "SELECT acc " +
+                    "FROM account acc " +
+                    "WHERE acc.deletedAt is null " +
+                    "ORDER BY acc.id ASC"
+        return NoOffsetItemReaderBuilder<AccountEntity>()
+            .entityManagerFactory(entityManagerFactory)
+            .queryString(queryString)
+            .parameterValues(emptyMap())
+            .chunkSize(chunkSize)
+            .name("noOffsetAccountReader")
+            .idExtractor { it.id!! }
+            .targetType(AccountEntity::class.java)
             .build()
     }
 
     @Bean
     fun accountProcessor(): ItemProcessor<AccountEntity, Account> {
-        return ItemProcessor { accountEntity ->
-            accountEntity.toAccount()
+        return ItemProcessor { item ->
+            item.toAccount()
         }
     }
 
