@@ -6,6 +6,14 @@ spring:
     url: jdbc:mysql://localhost:3306/~~~~~?serverZoneId=Asia/Seoul&sslMode=DISABLED
     username: ~~~~~
     password: ~~~~~
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+        maximum-pool-size: 50
+        minimum-idle: 10
+        idle-timeout: 600000
+        max-lifetime: 1800000
+        connection-timeout: 30000
+        pool-name: SpringBatchHikariCP
   jpa:
     hibernate:
       ddl-auto: update
