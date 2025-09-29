@@ -1,4 +1,4 @@
-package com.example.springbatchkotlin.configuration
+package com.example.springbatchkotlin.job
 
 import org.springframework.batch.core.ChunkListener
 import org.springframework.batch.core.scope.context.ChunkContext

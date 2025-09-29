@@ -1,4 +1,4 @@
-package com.example.springbatchkotlin.configuration
+package com.example.springbatchkotlin.job
 
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.util.Assert

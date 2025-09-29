@@ -1,4 +1,4 @@
-package com.example.springbatchkotlin.configuration
+package com.example.springbatchkotlin.job
 
 import com.example.springbatchkotlin.domain.account.Account
 import com.example.springbatchkotlin.infrastructure.persistence.jpa.account.AccountEntity
