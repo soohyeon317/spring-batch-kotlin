@@ -32,6 +32,7 @@ class AccountJobConfig(
         return JobBuilder("accountJob", jobRepository)
             .incrementer(RunIdIncrementer())
             .start(accountStep)
+            .listener(JobDurationTrackerListener())
             .build()
     }
 
